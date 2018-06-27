@@ -1,8 +1,11 @@
 pragma solidity ^0.4.22;
 
-import "./Ownable.sol";
+import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
+import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
 
 contract Series is Ownable {
+  using SafeMath for uint;
+  
   //title of the series
   string public title;
   //amount that the owner will receive from each pledger for each episode
@@ -72,13 +75,13 @@ contract Series is Ownable {
   * The owner cannot pledge on its own series.
   */
   function pledge() public payable {
-    require(msg.value + pledges[msg.sender] > pledgePerEpisode, "Pledge must be greater than minimum pledge per episode");
+    require(msg.value.add(pledges[msg.sender]) > pledgePerEpisode, "Pledge must be greater than minimum pledge per episode");
     require(msg.sender != owner, "Owner cannot pledge on its own series");
     if(pledges[msg.sender] == 0) {
       pledgers.push(msg.sender);
       emit NewPledger(msg.sender);
     }
-    pledges[msg.sender] += msg.value;
+    pledges[msg.sender] = pledges[msg.sender].add(msg.value);
     emit NewPledge(msg.sender, msg.value, pledges[msg.sender]);
   }
 
@@ -89,7 +92,7 @@ contract Series is Ownable {
     uint episodePay = 0;
     for(uint i = 0; i < pledgers.length; i++) {
       if(pledges[pledgers[i]] > pledgePerEpisode) {
-        episodePay += pledgePerEpisode;
+        episodePay = episodePay.add(pledgePerEpisode);
       }
     }
 
@@ -104,7 +107,7 @@ contract Series is Ownable {
   * @param episodeHash Hash of the episode as published on IPFS for example
   */
   function publish(bytes32 episodeHash) public onlyOwner {
-    require(lastPublicationBlock == 0 || block.number > lastPublicationBlock + minimumPublicationFrequency, "Owner cannot publish again so soon");
+    require(lastPublicationBlock == 0 || block.number > lastPublicationBlock.add(minimumPublicationFrequency), "Owner cannot publish again so soon");
     require(!publishedEpisodes[episodeHash], "This episode was already published");
 
     publishedEpisodes[episodeHash] = true;
@@ -115,7 +118,7 @@ contract Series is Ownable {
     //update pledges
     for(uint i = 0; i < pledgers.length; i++) {
       if(pledges[pledgers[i]] > pledgePerEpisode) {
-        pledges[pledgers[i]] -= pledgePerEpisode;
+        pledges[pledgers[i]] = pledges[pledgers[i]].sub(pledgePerEpisode);
         if(pledges[pledgers[i]] < pledgePerEpisode) {
           emit PledgeInsufficient(pledgers[i], pledges[pledgers[i]]);
         }
