@@ -86,6 +86,28 @@ contract Series is Ownable {
   }
 
   /*
+  * Total number of pledgers, whether they are still active or not,
+  * that is the number of accounts that have pledged at some point
+  */
+  function totalPledgers() public view returns (uint) {
+    return pledgers.length;
+  }
+
+  /*
+  * Number of active pledgers, that is number of pledgers whose pledge is still
+  * greater than minimum pledge per episode
+  */
+  function activePledgers() public view returns (uint) {
+    uint active = 0;
+    for(uint i = 0; i < pledgers.length; i++) {
+      if(pledges[pledgers[i]] > pledgePerEpisode) {
+        active++;
+      }
+    }
+    return active;
+  }
+
+  /*
   * Calculate how much the owner will get paid for next episode
   */
   function nextEpisodePay() public view returns (uint) {
