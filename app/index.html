@@ -1,12 +1,88 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>CryptoSeries</title>
-  <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
-  <script src="./app.js"></script>
+    <title>CryptoSeries</title>
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css"
+          integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"
+            integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T"
+            crossorigin="anonymous"></script>
+    <script src="./app.js"></script>
 </head>
 <body>
-  <h1>CryptoSeries</h1>
+<div class="card">
+    <div class="card-header text-center">
+        <h1>Series Title</h1>
+    </div>
+    <div class="card-body">
+        <h2 class="card-subtitle">Show Info</h2>
+        <div class="row">
+            <div class="col-sm">
+                <h5>New episodes</h5>
+                <p class="card-text">Every 86400 blocks
+                <span class="text-muted">(~ Every 2 weeks)</span></p>
+            </div>
+            <div class="col-sm text-right">
+                <h5>Pledge per episode</h5>
+                <p class="card-text">0.005 ETH
+                <span class="text-muted">(~ 2.91€)</span></p>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <h2 class="card-subtitle">Supporters</h2>
+        <div class="row">
+            <div class="col-sm">
+                <h5>1234 active</h5>
+                <p class="card-text">2345 followers</p>
+            </div>
+            <div class="col-sm text-right">
+                <h5>Next episode</h5>
+                <p class="card-text">6.17 ETH
+                    <span class="text-muted">(~ 2494€)</span></p>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <h2 class="card-subtitle">Your Support</h2>
+        <div class="alert alert-info">
+            <p>This application is a decentralized application based on the Ethereum blockchain network.
+            In order to be able to support this show, you have to browse this page with Chrome or Firefox, and install
+                either <a class="alert-link" href="https://chrome.google.com/webstore/detail/nkbihfbeogaeaoehlefnkodbefgpgknn">Metamask for Chrome</a> or <a class="alert-link" href="https://addons.mozilla.org/en-US/firefox/addon/ether-metamask/">Metamask for Firefox</a>.</p>
+            <hr>
+            <p class="mb-0">
+                Once you have installed the extension in your browser, unlock your vault and you should be able to see your pledge here, as well as a button to support this show.
+            </p>
+        </div>
+        <div class="row">
+            <div class="col-sm">
+                <h5 class="card-text">Your pledge:</h5>
+            </div>
+            <div class="col-sm text-right">
+                <h5 class="card-text">0.1 ETH <span class="text-muted">(~ 40.54€)</span></h5>
+                <p class="card-text text-muted">(20 episodes)</p>
+            </div>
+        </div>
+        <p class="card-text alert alert-warning" role="alert">Your pledge is below pledge per episode. Please increase your pledge if you want to support next episode.</p>
+        <p class="card-text">
+            <button class="btn btn-danger float-left">Withdraw</button>
+            <button class="btn btn-success float-right">Increase</button>
+        </p>
+    </div>
+    <div class="card-body">
+        <h2 class="card-subtitle">Episodes</h2>
+    </div>
+    <ul class="list-group list-group-flush">
+        <li class="list-group-item">#1 - 0x1234</li>
+        <li class="list-group-item">#2 - 0x2345</li>
+        <li class="list-group-item">#3 - 0x3456</li>
+    </ul>
+    <div class="card-footer text-muted">
+        <button class="btn btn-danger float-left">Close</button>
+        <button class="btn btn-success float-right">Publish</button>
+    </div>
+</div>
 
 </body>
 </html>
