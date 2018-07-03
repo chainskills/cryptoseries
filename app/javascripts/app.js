@@ -32,64 +32,109 @@ window.App = {
       }
 
       if (accs.length === 0) {
-        alert("Couldn't get any accounts! Make sure your Ethereum client is configured correctly.");
-        return;
+        $('#noAccountInfo').show();
+        $('#accountInfo').hide();
+      } else {
+        $('#noAccountInfo').hide();
+        $('#accountInfo').show();
       }
 
       accounts = accs;
-      account = accounts[0];
+      account = accounts.length === 0 ? undefined : accounts[0];
 
-      //self.refreshBalance();
+      self.refreshContractData();
+      if(accounts.length > 0) {
+        self.refreshAccountData(account);
+      }
     });
   },
 
-  setStatus: function(message) {
-    let status = document.getElementById("status");
-    status.innerHTML = message;
-  },
-
-  /*refreshBalance: function() {
+  refreshContractData: function() {
     let self = this;
 
-    var meta;
-    MetaCoin.deployed().then(function(instance) {
-      meta = instance;
-      return meta.getBalance.call(account, {from: account});
-    }).then(function(value) {
-      var balance_element = document.getElementById("balance");
-      balance_element.innerHTML = value.valueOf();
-    }).catch(function(e) {
-      console.log(e);
-      self.setStatus("Error getting balance; see log.");
+    let series;
+    Series.deployed().then(function(instance) {
+      series = instance;
+      return series.title();
+    }).then(function(title) {
+      $('#title').html(title);
+      return series.minimumPublicationFrequency();
+    }).then(function(minimumPublicationFrequency) {
+      $('#minimumPublicationFrequencyBlocks').html("" + minimumPublicationFrequency);
+      $('#minimumPublicationFrequencyTime').html((minimumPublicationFrequency*15/3600/24) + " days");
+      return series.pledgePerEpisode();
+    }).then(function(pledgePerEpisode) {
+      $('#pledgePerEpisodeEth').html("" + web3.fromWei(pledgePerEpisode, "ether"));
+      self.getEtherPrice('EUR', function(price) {
+        $('#pledgePerEpisodeFiat').html("" + (price * web3.fromWei(pledgePerEpisode, "ether")).toFixed(2) + ' €');
+      });
+      return series.activePledgers();
+    }).then(function(activePledgers){
+      $('#activePledgers').html("" + activePledgers);
+      return series.totalPledgers();
+    }).then(function(totalPledgers) {
+      $('#totalPledgers').html("" + totalPledgers);
+      return series.nextEpisodePay();
+    }).then(function(nextEpisodePay) {
+      $('#nextEpisodePayEth').html('' + web3.fromWei(nextEpisodePay, "ether"));
+      self.getEtherPrice('EUR', function(price) {
+        $('#nextEpisodePayFiat').html("" + (price * web3.fromWei(nextEpisodePay, "ether")).toFixed(2) + ' €')
+      })
     });
-  },*/
+  },
 
-  /*sendCoin: function() {
-    var self = this;
+    refreshAccountData: function(account) {
+      let self = this;
+      let series;
+      let perEpisode;
+      Series.deployed().then(function(instance) {
+          series = instance;
+          return series.pledgePerEpisode();
+      }).then(function(pledgePerEpisode) {
+        perEpisode = pledgePerEpisode;
+        return series.pledges(account);
+      }).then(function(pledge) {
+        if(pledge.toNumber() === 0) {
+            $('#withdrawButton').prop('disabled', true);
+        } else {
+            $('#withdrawButton').prop('disabled', false);
+        }
+        if(pledge < perEpisode) {
+          $('#pledgeTooLowWarning').show();
+        } else {
+          $('#pledgeTooLowWarning').hide();
+        }
+        $('#pledgeEth').html("" + web3.fromWei(pledge, "ether"));
+        $('#pledgeEpisodes').html("" + Math.floor(pledge / perEpisode));
+        self.getEtherPrice('EUR', function(price) {
+          $('#pledgeFiat').html('' + (price * web3.fromWei(pledge, "ether")).toFixed(2) + " €");
+        });
 
-    var amount = parseInt(document.getElementById("amount").value);
-    var receiver = document.getElementById("receiver").value;
+        return series.owner();
+      }).then(function(owner) {
+        if(account === owner) {
+          $('#yourSupport').hide();
+          $('#closeButton').show();
+          $('#publishButton').show();
+        } else {
+            $('#yourSupport').show();
+            $('#closeButton').hide();
+            $('#publishButton').hide();
+        }
+      });
+    },
 
-    this.setStatus("Initiating transaction... (please wait)");
-
-    var meta;
-    MetaCoin.deployed().then(function(instance) {
-      meta = instance;
-      return meta.sendCoin(receiver, amount, {from: account});
-    }).then(function() {
-      self.setStatus("Transaction complete!");
-      self.refreshBalance();
-    }).catch(function(e) {
-      console.log(e);
-      self.setStatus("Error sending coin; see log.");
-    });
-  }*/
+    getEtherPrice: function(fiat, callback) {
+      $.getJSON('https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD,EUR', function(data) {
+        callback(data[fiat]);
+      });
+    }
 };
 
 window.addEventListener('load', function() {
   // Checking if Web3 has been injected by the browser (Mist/MetaMask)
   if (typeof web3 !== 'undefined') {
-    console.warn("Using web3 detected from external source. If you find that your accounts don't appear or you have 0 MetaCoin, ensure you've configured that source properly. If using MetaMask, see the following link. Feel free to delete this warning. :) http://truffleframework.com/tutorials/truffle-and-metamask")
+    //console.warn("Using web3 detected from external source. If you find that your accounts don't appear or you have 0 MetaCoin, ensure you've configured that source properly. If using MetaMask, see the following link. Feel free to delete this warning. :) http://truffleframework.com/tutorials/truffle-and-metamask")
     // Use Mist/MetaMask's provider
     window.web3 = new Web3(web3.currentProvider);
   } else {

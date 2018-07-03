@@ -13,20 +13,20 @@
 <body>
 <div class="card">
     <div class="card-header text-center">
-        <h1>Series Title</h1>
+        <h1><span id="title">Series Title</span></h1>
     </div>
     <div class="card-body">
         <h2 class="card-subtitle">Show Info</h2>
         <div class="row">
             <div class="col-sm">
                 <h5>New episodes</h5>
-                <p class="card-text">Every 86400 blocks
-                <span class="text-muted">(~ Every 2 weeks)</span></p>
+                <p class="card-text">Every <span id="minimumPublicationFrequencyBlocks">86400</span> blocks<br>
+                <span class="text-muted">(~ Every <span id="minimumPublicationFrequencyTime">2 weeks</span>)</span></p>
             </div>
             <div class="col-sm text-right">
                 <h5>Pledge per episode</h5>
-                <p class="card-text">0.005 ETH
-                <span class="text-muted">(~ 2.91€)</span></p>
+                <p class="card-text"><span id="pledgePerEpisodeEth">0.005</span> ETH<br>
+                <span class="text-muted">(~ <span id="pledgePerEpisodeFiat">2.91€</span>)</span></p>
             </div>
         </div>
     </div>
@@ -34,19 +34,19 @@
         <h2 class="card-subtitle">Supporters</h2>
         <div class="row">
             <div class="col-sm">
-                <h5>1234 active</h5>
-                <p class="card-text">2345 followers</p>
+                <h5><span id="activePledgers">1234</span> active</h5>
+                <p class="card-text"><span id="totalPledgers">2345</span> followers</p>
             </div>
             <div class="col-sm text-right">
                 <h5>Next episode</h5>
-                <p class="card-text">6.17 ETH
-                    <span class="text-muted">(~ 2494€)</span></p>
+                <p class="card-text"><span id="nextEpisodePayEth">6.17</span> ETH
+                    <span class="text-muted">(~ <span id="nextEpisodePayFiat">2494€</span>)</span></p>
             </div>
         </div>
     </div>
-    <div class="card-body">
+    <div id="yourSupport" class="card-body">
         <h2 class="card-subtitle">Your Support</h2>
-        <div class="alert alert-info">
+        <div class="alert alert-info" id="noAccountInfo">
             <p>This application is a decentralized application based on the Ethereum blockchain network.
             In order to be able to support this show, you have to browse this page with Chrome or Firefox, and install
                 either <a class="alert-link" href="https://chrome.google.com/webstore/detail/nkbihfbeogaeaoehlefnkodbefgpgknn">Metamask for Chrome</a> or <a class="alert-link" href="https://addons.mozilla.org/en-US/firefox/addon/ether-metamask/">Metamask for Firefox</a>.</p>
@@ -55,34 +55,36 @@
                 Once you have installed the extension in your browser, unlock your vault and you should be able to see your pledge here, as well as a button to support this show.
             </p>
         </div>
-        <div class="row">
+        <div class="row" id="accountInfo">
             <div class="col-sm">
                 <h5 class="card-text">Your pledge:</h5>
             </div>
             <div class="col-sm text-right">
-                <h5 class="card-text">0.1 ETH <span class="text-muted">(~ 40.54€)</span></h5>
-                <p class="card-text text-muted">(20 episodes)</p>
+                <h5 class="card-text"><span id="pledgeEth">0.1</span> ETH <span class="text-muted">(~ <span id="pledgeFiat">40.54€</span>)</span></h5>
+                <p class="card-text text-muted">(<span id="pledgeEpisodes">20</span> episodes)</p>
             </div>
         </div>
-        <p class="card-text alert alert-warning" role="alert">Your pledge is below pledge per episode. Please increase your pledge if you want to support next episode.</p>
+        <p id="pledgeTooLowWarning" class="card-text alert alert-warning" role="alert">Your pledge is below pledge per episode. Please increase your pledge if you want to support next episode.</p>
         <p class="card-text">
-            <button class="btn btn-danger float-left">Withdraw</button>
-            <button class="btn btn-success float-right">Increase</button>
+            <button id="withdrawButton" class="btn btn-danger float-left">Withdraw</button>
+            <button id="pledgeButton" class="btn btn-success float-right">Increase</button>
         </p>
     </div>
-    <div class="card-body">
+    <div style="display: none" class="card-body">
         <h2 class="card-subtitle">Episodes</h2>
     </div>
-    <ul class="list-group list-group-flush">
+    <ul style="display: none" id="episodeList" class="list-group list-group-flush">
         <li class="list-group-item">#1 - 0x1234</li>
         <li class="list-group-item">#2 - 0x2345</li>
         <li class="list-group-item">#3 - 0x3456</li>
     </ul>
+
     <div class="card-footer text-muted">
-        <button class="btn btn-danger float-left">Close</button>
-        <button class="btn btn-success float-right">Publish</button>
+        <button id="closeButton" class="btn btn-danger float-left">Close</button>
+        <button id="publishButton" class="btn btn-success float-right">Publish</button>
     </div>
 </div>
-
+<div class="text-center">Developed by <a href="http://www.chainskills.com">ChainSkills</a> - Price data by <a href="https://www.cryptocompare.com">CryptoCompare</a></div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 </body>
 </html>
