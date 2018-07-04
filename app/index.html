@@ -5,10 +5,6 @@
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css"
           integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"
-            integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T"
-            crossorigin="anonymous"></script>
-    <script src="./app.js"></script>
 </head>
 <body>
 <div class="card">
@@ -21,12 +17,13 @@
             <div class="col-sm">
                 <h5>New episodes</h5>
                 <p class="card-text">Every <span id="minimumPublicationFrequencyBlocks">86400</span> blocks<br>
-                <span class="text-muted">(~ Every <span id="minimumPublicationFrequencyTime">2 weeks</span>)</span></p>
+                    <span class="text-muted">(~ Every <span id="minimumPublicationFrequencyTime">2 weeks</span>)</span>
+                </p>
             </div>
             <div class="col-sm text-right">
                 <h5>Pledge per episode</h5>
                 <p class="card-text"><span id="pledgePerEpisodeEth">0.005</span> ETH<br>
-                <span class="text-muted">(~ <span id="pledgePerEpisodeFiat">2.91€</span>)</span></p>
+                    <span class="text-muted">(~ <span id="pledgePerEpisodeFiat">2.91€</span>)</span></p>
             </div>
         </div>
     </div>
@@ -48,11 +45,17 @@
         <h2 class="card-subtitle">Your Support</h2>
         <div class="alert alert-info" id="noAccountInfo">
             <p>This application is a decentralized application based on the Ethereum blockchain network.
-            In order to be able to support this show, you have to browse this page with Chrome or Firefox, and install
-                either <a class="alert-link" href="https://chrome.google.com/webstore/detail/nkbihfbeogaeaoehlefnkodbefgpgknn">Metamask for Chrome</a> or <a class="alert-link" href="https://addons.mozilla.org/en-US/firefox/addon/ether-metamask/">Metamask for Firefox</a>.</p>
+                In order to be able to support this show, you have to browse this page with Chrome or Firefox, and
+                install
+                either <a class="alert-link"
+                          href="https://chrome.google.com/webstore/detail/nkbihfbeogaeaoehlefnkodbefgpgknn">Metamask for
+                    Chrome</a> or <a class="alert-link"
+                                     href="https://addons.mozilla.org/en-US/firefox/addon/ether-metamask/">Metamask for
+                    Firefox</a>.</p>
             <hr>
             <p class="mb-0">
-                Once you have installed the extension in your browser, unlock your vault and you should be able to see your pledge here, as well as a button to support this show.
+                Once you have installed the extension in your browser, unlock your vault and you should be able to see
+                your pledge here, as well as a button to support this show.
             </p>
         </div>
         <div class="row" id="accountInfo">
@@ -60,14 +63,18 @@
                 <h5 class="card-text">Your pledge:</h5>
             </div>
             <div class="col-sm text-right">
-                <h5 class="card-text"><span id="pledgeEth">0.1</span> ETH <span class="text-muted">(~ <span id="pledgeFiat">40.54€</span>)</span></h5>
+                <h5 class="card-text"><span id="pledgeEth">0.1</span> ETH <span class="text-muted">(~ <span
+                        id="pledgeFiat">40.54€</span>)</span></h5>
                 <p class="card-text text-muted">(<span id="pledgeEpisodes">20</span> episodes)</p>
             </div>
         </div>
-        <p id="pledgeTooLowWarning" class="card-text alert alert-warning" role="alert">Your pledge is below pledge per episode. Please increase your pledge if you want to support next episode.</p>
+        <p id="pledgeTooLowWarning" class="card-text alert alert-warning" role="alert">Your pledge is below pledge per
+            episode. Please increase your pledge if you want to support next episode.</p>
         <p class="card-text">
             <button id="withdrawButton" class="btn btn-danger float-left">Withdraw</button>
-            <button id="pledgeButton" class="btn btn-success float-right">Increase</button>
+            <button id="pledgeButton" type="button" class="btn btn-success float-right" data-toggle="modal"
+                    data-target="#supportModal">Increase
+            </button>
         </p>
     </div>
     <div style="display: none" class="card-body">
@@ -79,12 +86,102 @@
         <li class="list-group-item">#3 - 0x3456</li>
     </ul>
 
-    <div class="card-footer text-muted">
+    <div id="ownerFooter" class="card-footer text-muted">
         <button id="closeButton" class="btn btn-danger float-left">Close</button>
         <button id="publishButton" class="btn btn-success float-right">Publish</button>
     </div>
 </div>
-<div class="text-center">Developed by <a href="http://www.chainskills.com">ChainSkills</a> - Price data by <a href="https://www.cryptocompare.com">CryptoCompare</a></div>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<div class="text-center">Developed by <a href="http://www.chainskills.com">ChainSkills</a> - Price data by <a
+        href="https://www.cryptocompare.com">CryptoCompare</a> - Source code <a
+        href="https://github.com/chainskills/cryptoseries">available on Github</a></div>
+
+<!-- Modal -->
+<div class="modal fade" id="supportModal" tabindex="-1" role="dialog" aria-labelledby="supportModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="supportModalLabel">Support <span id="supportSeriesTitle">Series Name</span>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>You can support this show financially by pledging for a certain number of episodes.</p>
+                <p>At any time, you can withdraw your entire pledge or increase it.</p>
+                <p>When you increase your pledge, the total must be greater than the pledge for one episode.</p>
+                <p>The <a id="supportContractAddress" href="#" target="_blank">smart contract</a> guarantees that:</p>
+                <ul>
+                    <li>every time the producer of this show publishes a new episode, your pledge will decrease by <span
+                            id="supportPledgePerEpisode"></span> ETH
+                    </li>
+                    <li>the show producer has to wait at least <span id="supportPublicationFrequencyBlocks"></span>
+                        blocks after a publication to publish again
+                    </li>
+                    <li>if the show gets cancelled and terminated, you will automatically get your entire pledge back
+                    </li>
+                    <li>the pledge per episode or publication frequency cannot change</li>
+                </ul>
+                <form class="form-inline">
+                    <div class="row">
+                        <label style="margin-left:20px">Support the show for</label>
+                        <div class="col">
+                            <div class="input-group">
+                                <input id="supportEpisodes"
+                                       title="Number of episodes to support"
+                                       name="supportEpisodes"
+                                       class="form-control"
+                                       type="number"
+                                       value="1"
+                                       step="1"
+                                       min="1"
+                                       oninput="App.supportEpisodesChanged(event)"
+                                       onchange="App.supportEpisodesChanged(event)"/>
+                                <div class="input-group-append">
+                                    <div class="input-group-text">episodes</div>
+                                </div>
+                            </div>
+                        </div>
+                        <label>or</label>
+                        <div class="col">
+                            <div class="input-group">
+                                <input id="supportEth"
+                                       name="supportEth"
+                                       type="text"
+                                       title="Ether to pledge"
+                                       class="form-control"
+                                       oninput="App.supportEthChanged(event)"
+                                       onchange="App.supportEthChanged(event)"/>
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        ETH
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button id="supportConfirmButton" type="button" class="btn btn-primary" onclick="App.pledge(event)">Confirm Support</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>-->
+<script
+        src="https://code.jquery.com/jquery-3.3.1.min.js"
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
+        integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+        crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"
+        integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T"
+        crossorigin="anonymous"></script>
+<script src="./app.js"></script>
 </body>
 </html>
