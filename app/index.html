@@ -71,7 +71,7 @@
         <p id="pledgeTooLowWarning" class="card-text alert alert-warning" role="alert">Your pledge is below pledge per
             episode. Please increase your pledge if you want to support next episode.</p>
         <p class="card-text">
-            <button id="withdrawButton" class="btn btn-danger float-left">Withdraw</button>
+            <button id="withdrawButton" class="btn btn-danger float-left" data-toggle="modal" data-target="#withdrawModal">Withdraw</button>
             <button id="pledgeButton" type="button" class="btn btn-success float-right" data-toggle="modal"
                     data-target="#supportModal">Increase
             </button>
@@ -166,6 +166,27 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button id="supportConfirmButton" type="button" class="btn btn-primary" onclick="App.pledge(event)">Confirm Support</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="withdrawModal" tabindex="-1" role="dialog" aria-labelledby="withdrawModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="withdrawModalLabel">Are you sure you want to withdraw?</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>If you withdraw your pledge for <span id="withdrawPledgeEth"></span> ETH (<span id="withdrawPledgeFiat"></span>), you will get all of it back (minus the fees for this transaction of course), but you will no longer support new episodes of this show.</p>
+                <p>Are you sure you want to withdraw?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="App.withdraw()">Yes, please give me my money back</button>
             </div>
         </div>
     </div>

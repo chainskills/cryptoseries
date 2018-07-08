@@ -154,10 +154,14 @@ window.App = {
             } else {
                 $('#pledgeTooLowWarning').hide();
             }
-            $('#pledgeEth').html("" + web3.fromWei(pledge, "ether"));
+            let pledgeEth = "" + web3.fromWei(pledge, "ether");
+            $('#pledgeEth').html(pledgeEth);
             $('#pledgeEpisodes').html("" + Math.floor(pledge / perEpisode));
+            $('#withdrawPledgeEth').html(pledgeEth);
             self.getEtherPrice('EUR', function (price) {
-                $('#pledgeFiat').html('' + (price * web3.fromWei(pledge, "ether")).toFixed(2) + " €");
+                let pledgeFiat = '' + (price * web3.fromWei(pledge, "ether")).toFixed(2) + " €";
+                $('#pledgeFiat').html(pledgeFiat);
+                $('#withdrawPledgeFiat').html(pledgeFiat);
             });
 
             return series.owner();
@@ -216,16 +220,40 @@ window.App = {
                 if(accounts && accounts.length > 0) {
                     Series.deployed().then(function(instance) {
                         let value = web3.toWei(pledgeValue, "ether");
-                        console.log(value);
-                        return instance.pledge({from: accounts[0], value: value});
+                        return instance.pledge({from: accounts[0], value: value, gas: 500000});
                     }).then(function(result){
-                        $('#supportModal').modal('hide');
+                        console.log(result);
+                        if(result.receipt.status === '0x01') {
+                            $('#supportModal').modal('hide');
+                            $('#supportEpisodes').val(1);
+                            App.supportEpisodesChanged();
+                        } else {
+                            console.error("Transaction didn't succeed");
+                        }
                     }).catch(function(error) {
                         console.error(error);
                     });
                 }
             });
         }
+    },
+
+    withdraw: function() {
+        web3.eth.getAccounts(function(error, accounts) {
+            if(accounts && accounts.length > 0) {
+                Series.deployed().then(function(instance) {
+                    return instance.withdraw({from: accounts[0], gas: 500000});
+                }).then(function(result) {
+                    if(result.receipt.status === '0x01'){
+                        $('#withdrawModal').modal('hide');
+                    } else {
+                        console.error("Transaction didn't succeed");
+                    }
+                }).catch(function(error) {
+                    console.error(error);
+                })
+            }
+        })
     }
 };
 
