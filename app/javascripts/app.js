@@ -47,6 +47,7 @@ window.App = {
     },
 
     refreshContractData: function () {
+        $('#cover-spin').show();
         let self = this;
 
         let series;
@@ -83,7 +84,8 @@ window.App = {
             $('#nextEpisodePayEth').html('' + web3.fromWei(nextEpisodePay, "ether"));
             self.getEtherPrice('EUR', function (price) {
                 $('#nextEpisodePayFiat').html("" + (price * web3.fromWei(nextEpisodePay, "ether")).toFixed(2) + ' €')
-            })
+            });
+            $('#cover-spin').hide();
         }).catch(function(error){
             $('#showInfo').hide();
             $('#supporters').hide();
@@ -91,7 +93,57 @@ window.App = {
             $('#episodes').hide();
             $('#episodeList').hide();
             $('#ownerFooter').hide();
-            $('#title').html("This show was cancelled. You cannot support it anymore.")
+            $('#title').html("This show was cancelled. You cannot support it anymore.");
+            $('#cover-spin').hide();
+        });
+    },
+
+    refreshAccountData: function (account) {
+        $('#cover-spin').show();
+        let self = this;
+        let series;
+        let perEpisode;
+        Series.deployed().then(function (instance) {
+            series = instance;
+            return series.pledgePerEpisode();
+        }).then(function (pledgePerEpisode) {
+            perEpisode = pledgePerEpisode;
+            return series.pledges(account);
+        }).then(function (pledge) {
+            if (pledge.toNumber() === 0) {
+                $('#withdrawButton').prop('disabled', true);
+                $('#pledgeButton').html('Support');
+            } else {
+                $('#withdrawButton').prop('disabled', false);
+                $('#pledgeButton').html('Increase');
+            }
+            if (web3.fromWei(pledge) < web3.fromWei(perEpisode)) {
+                $('#pledgeTooLowWarning').show();
+            } else {
+                $('#pledgeTooLowWarning').hide();
+            }
+            let pledgeEth = "" + web3.fromWei(pledge, "ether");
+            $('#pledgeEth').html(pledgeEth);
+            $('#pledgeEpisodes').html("" + Math.floor(pledge / perEpisode));
+            $('#withdrawPledgeEth').html(pledgeEth);
+            self.getEtherPrice('EUR', function (price) {
+                let pledgeFiat = '' + (price * web3.fromWei(pledge, "ether")).toFixed(2) + " €";
+                $('#pledgeFiat').html(pledgeFiat);
+                $('#withdrawPledgeFiat').html(pledgeFiat);
+            });
+
+            return series.owner();
+        }).then(function (owner) {
+            if (account === owner) {
+                $('#yourSupport').hide();
+                $('#ownerFooter').show();
+            } else {
+                $('#yourSupport').show();
+                $('#ownerFooter').hide();
+            }
+            $('#cover-spin').hide();
+        }).catch(function(error) {
+            console.error(error);
         });
     },
 
@@ -141,51 +193,6 @@ window.App = {
         }
     },
 
-    refreshAccountData: function (account) {
-        let self = this;
-        let series;
-        let perEpisode;
-        Series.deployed().then(function (instance) {
-            series = instance;
-            return series.pledgePerEpisode();
-        }).then(function (pledgePerEpisode) {
-            perEpisode = pledgePerEpisode;
-            return series.pledges(account);
-        }).then(function (pledge) {
-            if (pledge.toNumber() === 0) {
-                $('#withdrawButton').prop('disabled', true);
-                $('#pledgeButton').html('Support');
-            } else {
-                $('#withdrawButton').prop('disabled', false);
-                $('#pledgeButton').html('Increase');
-            }
-            if (web3.fromWei(pledge) < web3.fromWei(perEpisode)) {
-                $('#pledgeTooLowWarning').show();
-            } else {
-                $('#pledgeTooLowWarning').hide();
-            }
-            let pledgeEth = "" + web3.fromWei(pledge, "ether");
-            $('#pledgeEth').html(pledgeEth);
-            $('#pledgeEpisodes').html("" + Math.floor(pledge / perEpisode));
-            $('#withdrawPledgeEth').html(pledgeEth);
-            self.getEtherPrice('EUR', function (price) {
-                let pledgeFiat = '' + (price * web3.fromWei(pledge, "ether")).toFixed(2) + " €";
-                $('#pledgeFiat').html(pledgeFiat);
-                $('#withdrawPledgeFiat').html(pledgeFiat);
-            });
-
-            return series.owner();
-        }).then(function (owner) {
-            if (account === owner) {
-                $('#yourSupport').hide();
-                $('#ownerFooter').show();
-            } else {
-                $('#yourSupport').show();
-                $('#ownerFooter').hide();
-            }
-        });
-    },
-
     refresh: function(account) {
         App.refreshContractData();
         if(account) {
@@ -228,6 +235,7 @@ window.App = {
     },
 
     pledge: function(event) {
+        $('#cover-spin').show();
         let pledgeValue = $('#supportEth').val();
         if($.isNumeric(pledgeValue) && pledgeValue > 0) {
             web3.eth.getAccounts(function(error, accounts) {
@@ -245,6 +253,7 @@ window.App = {
                             console.error("Transaction didn't succeed");
                         }
                     }).catch(function(error) {
+                        $('#cover-spin').hide();
                         console.error(error);
                     });
                 }
@@ -253,6 +262,7 @@ window.App = {
     },
 
     withdraw: function() {
+        $('#cover-spin').show();
         web3.eth.getAccounts(function(error, accounts) {
             if(accounts && accounts.length > 0) {
                 Series.deployed().then(function(instance) {
@@ -264,6 +274,7 @@ window.App = {
                         console.error("Transaction didn't succeed");
                     }
                 }).catch(function(error) {
+                    $('#cover-spin').hide();
                     console.error(error);
                 })
             }
@@ -271,6 +282,7 @@ window.App = {
     },
 
     close: function() {
+        $('#cover-spin').show();
         web3.eth.getAccounts(function(error, accounts) {
             if(accounts && accounts.length > 0) {
                 Series.deployed().then(function(instance) {
@@ -282,6 +294,7 @@ window.App = {
                         console.error("Transaction didn't succeed");
                     }
                 }).catch(function(error) {
+                    $('#cover-spin').hide();
                     console.error(error);
                 })
             }
