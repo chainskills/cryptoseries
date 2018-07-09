@@ -56,6 +56,12 @@ contract Series is Ownable {
   event PledgeInsufficient(address indexed pledger, uint pledge);
 
   /*
+  * Emitted when the show is closed by the owner
+  * @param balanceBeforeClose Balance of the contract at the moment of closing
+  */
+  event SeriesClosed(uint balanceBeforeClose);
+
+  /*
   * Configures the series parameters
   * @param title Title of the series
   * @param pledgePerEpisode Amount the owner will receive for each episode from each pledger
@@ -176,6 +182,7 @@ contract Series is Ownable {
   * Give their money back to all pledgers before killing the contract
   */
   function close() public onlyOwner {
+    uint contractBalance = address(this).balance;
     for(uint i = 0; i < pledgers.length; i++) {
       uint amount = pledges[pledgers[i]];
       if(amount > 0) {
@@ -183,6 +190,7 @@ contract Series is Ownable {
         pledgers[i].transfer(amount);
       }
     }
+    emit SeriesClosed(contractBalance);
     selfdestruct(owner);
   }
 }

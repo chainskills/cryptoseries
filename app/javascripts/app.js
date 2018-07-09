@@ -51,10 +51,12 @@ window.App = {
 
         let series;
         Series.deployed().then(function (instance) {
+            console.log("instance:", instance);
             series = instance;
             $('#supportContractAddress').prop('href', 'https://etherscan.io/address/' + instance.address);
             return series.title();
         }).then(function (title) {
+            console.log("title", title);
             $('#title').html(title);
             $('#supportSeriesTitle').html(title);
             return series.minimumPublicationFrequency();
@@ -82,6 +84,14 @@ window.App = {
             self.getEtherPrice('EUR', function (price) {
                 $('#nextEpisodePayFiat').html("" + (price * web3.fromWei(nextEpisodePay, "ether")).toFixed(2) + ' €')
             })
+        }).catch(function(error){
+            $('#showInfo').hide();
+            $('#supporters').hide();
+            $('#yourSupport').hide();
+            $('#episodes').hide();
+            $('#episodeList').hide();
+            $('#ownerFooter').hide();
+            $('#title').html("This show was cancelled. You cannot support it anymore.")
         });
     },
 
@@ -204,6 +214,10 @@ window.App = {
             instance.PledgeInsufficient({}, {}).watch(function(error, event) {
                 App.refresh(account);
             });
+
+            instance.SeriesClosed({}, {}).watch(function(error, event) {
+                App.refresh(account);
+            })
         });
     },
 
@@ -253,8 +267,40 @@ window.App = {
                     console.error(error);
                 })
             }
-        })
+        });
+    },
+
+    close: function() {
+        web3.eth.getAccounts(function(error, accounts) {
+            if(accounts && accounts.length > 0) {
+                Series.deployed().then(function(instance) {
+                    return instance.close({from: accounts[0], gas: 500000});
+                }).then(function(result) {
+                    if(result.receipt.status === '0x01'){
+                        $('#closeModal').modal('hide');
+                    } else {
+                        console.error("Transaction didn't succeed");
+                    }
+                }).catch(function(error) {
+                    console.error(error);
+                })
+            }
+        });
     }
+
+    /*ipfsHashToBytes32: function(ipfs_hash) {
+        let h = bs58.decode(ipfs_hash).toString('hex').replace(/^1220/, '');
+        if (h.length != 64) {
+            console.error('invalid ipfs format', ipfs_hash, h);
+            return null;
+        }
+        return '0x' + h;
+    },
+
+    bytes32ToIPFSHash: function(hash_hex) {
+        let buf = new Buffer(hash_hex.replace(/^0x/, '1220'), 'hex')
+        return bs58.encode(buf)
+    },*/
 };
 
 window.addEventListener('load', function () {
