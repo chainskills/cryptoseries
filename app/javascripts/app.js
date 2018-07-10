@@ -5,6 +5,7 @@ import {default as Web3} from 'web3';
 import {default as contract} from 'truffle-contract'
 // Import our contract artifacts and turn them into usable abstractions.
 import series_artifacts from '../../build/contracts/Series.json'
+
 let Series = contract(series_artifacts);
 
 // The following code is simple to show off interacting with your contracts.
@@ -46,9 +47,9 @@ window.App = {
      * @param account The account that's connected to the application in Metamask if any.
      * If no account is specify, the account-specific parts of the UI will simply be hidden
      */
-    refresh: function(account) {
+    refresh: function (account) {
         App.refreshContractData();
-        if(account) {
+        if (account) {
             $('#noAccountInfo').hide();
             $('#accountInfo').show();
             App.refreshAccountData(account);
@@ -81,14 +82,14 @@ window.App = {
             $('#title').html(title);
             // ... as well as in the support dialog
             $('#supportSeriesTitle').html(title);
-            // we load the minimum publication frequency
-            return series.minimumPublicationFrequency();
-        }).then(function (minimumPublicationFrequency) {
+            // we load the minimum publication period
+            return series.minimumPublicationPeriod();
+        }).then(function (minimumPublicationPeriod) {
             // we push this piece of information to the main UI...
-            $('#minimumPublicationFrequencyBlocks').html("" + minimumPublicationFrequency);
-            $('#minimumPublicationFrequencyTime').html((minimumPublicationFrequency * 15 / 3600 / 24) + " days");
+            $('#minimumPublicationPeriodBlocks').html("" + minimumPublicationPeriod);
+            $('#minimumPublicationPeriodTime').html((minimumPublicationPeriod * 15 / 3600 / 24) + " days");
             // ...and to the support dialog
-            $('#supportPublicationFrequencyBlocks').html("" + minimumPublicationFrequency);
+            $('#supportPublicationPeriodBlocks').html("" + minimumPublicationPeriod);
             // we load the pledge per episode
             return series.pledgePerEpisode();
         }).then(function (pledgePerEpisode) {
@@ -124,7 +125,7 @@ window.App = {
             });
             // at this stage, all the contract-generic data is loaded so we hide the progress indicator
             $('#cover-spin').hide();
-        }).catch(function(error){
+        }).catch(function (error) {
             // in case an error happens in this loading process, it means the contract has been disabled
             // so we hide all the UI elements and show a message instead of the title
             $('#showInfo').hide();
@@ -145,7 +146,7 @@ window.App = {
      */
     refreshAccountData: function (account) {
         // if no account is currently selected in Metamask or Metamask is locked, don't do anything there
-        if(undefined === account || null === account) {
+        if (undefined === account || null === account) {
             return
         }
         // otherwise, start by showing the progress indicator
@@ -203,13 +204,45 @@ window.App = {
             if (account === owner) {
                 $('#yourSupport').hide();
                 $('#ownerFooter').show();
+                // we will display a message and disable the publish button if it's too soon for the owner to publish a new episode
+                // we need to know whether an episode has already published
+                series.episodeCounter().then(function(episodeCounter) {
+                    // otherwise publication is possible right away
+                    if(episodeCounter.toNumber() === 0) {
+                        $('#publishButton').prop('disabled', false);
+                        $('#publishWait').html('You can publish whenever you want.');
+                        $('#cover-spin').hide();
+                    } else {
+                        // if at least one episode has already been published, we will need 2 pieces of info from the contract: last publication block and minimum publication period
+                        let lastPublicationBlockNumber, minimumPublicationPeriodNumber;
+                        series.lastPublicationBlock().then(function(lastPublicationBlock) {
+                            lastPublicationBlockNumber = lastPublicationBlock.toNumber();
+                            return series.minimumPublicationPeriod();
+                        }).then(function(minimumPublicationPeriod) {
+                            minimumPublicationPeriodNumber = minimumPublicationPeriod.toNumber();
+                            // once we have those 2 elements, we check the last block mined on the chain we are connected to
+                            web3.eth.getBlockNumber(function(error, blockNumber) {
+                                // and based on that we determine if the owner has to wait, and if yes, for how many blocks
+                                if(lastPublicationBlockNumber + minimumPublicationPeriod > blockNumber) {
+                                    $('#publishWait').html("You have to wait for " + (lastPublicationBlockNumber + minimumPublicationPeriodNumber - blockNumber) + " blocks before publishing again.");
+                                    $('#publishButton').prop('disabled', true);
+                                } else {
+                                    $('#publishButton').prop('disabled', false);
+                                    $('#publishWait').html('You can publish whenever you want.');
+                                }
+                                $('#cover-spin').hide();
+                            });
+                        });
+                    }
+                });
             } else {
+                // if current user is not the owner, we hide the owner-specific buttons and show the supporter ones
                 $('#yourSupport').show();
                 $('#ownerFooter').hide();
             }
             // at this stage we can hide the progress indicator
             $('#cover-spin').hide();
-        }).catch(function(error) {
+        }).catch(function (error) {
             // if any error happens at this stage, we simply log it not to lose it
             console.error(error);
         });
@@ -220,29 +253,29 @@ window.App = {
      * @param account The account currently selected in Metamask, if any.
      * If none, the account-specific information will be hidden.
      */
-    watchEvents: function(account) {
-        Series.deployed().then(function(instance) {
-            instance.NewPledger({}, {}).watch(function(error, event) {
+    watchEvents: function (account) {
+        Series.deployed().then(function (instance) {
+            instance.NewPledger({}, {}).watch(function (error, event) {
                 App.refresh(account);
             });
 
-            instance.NewPledge({}, {}).watch(function(error, event) {
+            instance.NewPledge({}, {}).watch(function (error, event) {
                 App.refresh(account);
             });
 
-            instance.NewPublication({}, {}).watch(function(error, event){
+            instance.NewPublication({}, {}).watch(function (error, event) {
                 App.refresh(account);
             });
 
-            instance.Withdrawal({}, {}).watch(function(error, event) {
+            instance.Withdrawal({}, {}).watch(function (error, event) {
                 App.refresh(account);
             });
 
-            instance.PledgeInsufficient({}, {}).watch(function(error, event) {
+            instance.PledgeInsufficient({}, {}).watch(function (error, event) {
                 App.refresh(account);
             });
 
-            instance.SeriesClosed({}, {}).watch(function(error, event) {
+            instance.SeriesClosed({}, {}).watch(function (error, event) {
                 App.refresh(account);
             })
         });
@@ -319,31 +352,31 @@ window.App = {
     /**
      * This function is called when the confirmation button in the support modal is clicked
      */
-    pledge: function() {
+    pledge: function () {
         // we retrieve the value of the support modal Ether field
         // not the number of episodes because this one might be zero if amount in ETH is lower than pledge per episode
         let pledgeValue = $('#supportEth').val();
         // only if it's numeric and positive do we trigger the contract call
-        if($.isNumeric(pledgeValue) && pledgeValue > 0) {
+        if ($.isNumeric(pledgeValue) && pledgeValue > 0) {
             // we show a progress indicator because this action will trigger a transaction that will need to be mined
             // before the data for the contract can be updated
             $('#cover-spin').show();
             // we reload the active account to make sure we have the right one
-            web3.eth.getAccounts(function(error, accounts) {
+            web3.eth.getAccounts(function (error, accounts) {
                 // we make sure an account is selected (Metamask is unlocked)
-                if(accounts && accounts.length > 0) {
-                    Series.deployed().then(function(instance) {
+                if (accounts && accounts.length > 0) {
+                    Series.deployed().then(function (instance) {
                         // the user specifies the pledge value in ETH, so we need to convert it into wei before calling the contract
                         let value = web3.toWei(pledgeValue, "ether");
                         // we call the pledge function on the contract, specifying a gas value that corresponds to an upper value estimation
                         // of how complex this operation will be
                         return instance.pledge({from: accounts[0], value: value, gas: 500000});
-                    }).then(function(result){
+                    }).then(function (result) {
                         // result contains the receipt of the transaction that was triggered
                         console.log(result);
                         // in some node implementation, no exception is triggered on a failing transaction and we have to check
                         // the status field in the transaction receipt
-                        if(result.receipt.status === '0x01') {
+                        if (result.receipt.status === '0x01') {
                             // if transaction is successful, we can hide the support modal
                             $('#supportModal').modal('hide');
                             // then reset it for next time
@@ -352,7 +385,7 @@ window.App = {
                         } else {
                             console.error("Transaction didn't succeed");
                         }
-                    }).catch(function(error) {
+                    }).catch(function (error) {
                         // if an error occurs, we simply hide the progress indicator and log the error
                         // we could also display an error message to the user here
                         $('#cover-spin').hide();
@@ -369,61 +402,97 @@ window.App = {
     /**
      * This function is called when the user confirms he wants to recover his entire pledge
      */
-    withdraw: function() {
+    withdraw: function () {
         // we retrieve the address of the connected account
-        web3.eth.getAccounts(function(error, accounts) {
-            if(accounts && accounts.length > 0) {
+        web3.eth.getAccounts(function (error, accounts) {
+            if (accounts && accounts.length > 0) {
                 // we show a progress indicator
                 $('#cover-spin').show();
-                Series.deployed().then(function(instance) {
+                Series.deployed().then(function (instance) {
                     // and we call the contract's withdraw function,
                     // specifying an amount of gas corresponding to an estimation of the upper bound for the cost of this operation
                     return instance.withdraw({from: accounts[0], gas: 500000});
-                }).then(function(result) {
+                }).then(function (result) {
                     // in some node implementation, no exception is thrown when a transaction fails,
                     // so we have to check the status of the transaction receipt
-                    if(result.receipt.status === '0x01'){
+                    if (result.receipt.status === '0x01') {
                         // if everything went smoothly, we simply hide the modal, and the UI will be refreshed based on the event watcher
                         $('#withdrawModal').modal('hide');
                     } else {
                         console.error("Transaction didn't succeed");
                     }
-                }).catch(function(error) {
+                }).catch(function (error) {
                     // in case of an error, we simply hide the progress indicator and log the error
                     // but we could also display an error message for the user here
                     $('#cover-spin').hide();
                     console.error(error);
-                })
+                });
             }
         });
+    },
+
+    publish: function () {
+        let episodeLinkField = $('#episodeLink');
+        let episodeLink = episodeLinkField.val();
+        if (episodeLink && episodeLink.length > 0) {
+            episodeLinkField.removeClass('is-invalid');
+            // we retrieve the address of the connected account
+            web3.eth.getAccounts(function (error, accounts) {
+                if (accounts && accounts.length > 0) {
+                    // we show a progress indicator
+                    $('#cover-spin').show();
+                    Series.deployed().then(function (instance) {
+                        // and we call the contract's publish function,
+                        // specifying an amount of gas corresponding to an estimation of the upper bound for the cost of this operation
+                        return instance.publish(episodeLink, {from: accounts[0], gas: 500000});
+                    }).then(function (result) {
+                        // in some node implementation, no exception is thrown when a transaction fails,
+                        // so we have to check the status of the transaction receipt
+                        if (result.receipt.status === '0x01') {
+                            // if everything went smoothly, we simply hide the modal, and the UI will be refreshed based on the event watcher
+                            $('#publishModal').modal('hide');
+                        } else {
+                            console.error("Transaction didn't succeed");
+                        }
+                    }).catch(function (error) {
+                        // in case of an error, we simply hide the progress indicator and log the error
+                        // but we could also display an error message for the user here
+                        $('#cover-spin').hide();
+                        console.error(error);
+                    });
+                }
+            });
+        } else {
+            episodeLinkField.addClass('is-invalid');
+        }
     },
 
     /**
      * This function is called when the owner of the contract has confirmed that he wants to cancel the show
      * and send all their money back to his supporters
      */
-    close: function() {
+    close: function () {
         // we reload the connected account
-        web3.eth.getAccounts(function(error, accounts) {
-            if(accounts && accounts.length > 0) {
+        web3.eth.getAccounts(function (error, accounts) {
+            if (accounts && accounts.length > 0) {
                 // we show a progress indicator
                 $('#cover-spin').show();
                 // we reload the contract instance
-                Series.deployed().then(function(instance) {
+                Series.deployed().then(function (instance) {
                     // we call the close function, specifying a gas amount that corresponds to an estimation
                     // of the cost of this operation. Note that if there are too many supporters to pay back
                     // this operation may fail
                     return instance.close({from: accounts[0], gas: 500000});
-                }).then(function(result) {
+                }).then(function (result) {
                     // given that certain node implementations don't throw an exception when a transaction fail
                     // we check the status of the transaction receipt
-                    if(result.receipt.status === '0x01'){
+                    if (result.receipt.status === '0x01') {
                         // if everything is OK, we simply hide the modal and event watchers will update the UI later
                         $('#closeModal').modal('hide');
                     } else {
                         console.error("Transaction didn't succeed");
                     }
-                }).catch(function(error) {
+                }).catch(function (error) {
                     $('#cover-spin').hide();
                     console.error(error);
                 })

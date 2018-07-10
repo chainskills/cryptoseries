@@ -17,8 +17,8 @@
         <div class="row">
             <div class="col-sm">
                 <h5>New episodes</h5>
-                <p class="card-text">Every <span id="minimumPublicationFrequencyBlocks">86400</span> blocks<br>
-                    <span class="text-muted">(~ Every <span id="minimumPublicationFrequencyTime">2 weeks</span>)</span>
+                <p class="card-text">Every <span id="minimumPublicationPeriodBlocks">86400</span> blocks<br>
+                    <span class="text-muted">(~ Every <span id="minimumPublicationPeriodTime">2 weeks</span>)</span>
                 </p>
             </div>
             <div class="col-sm text-right">
@@ -89,14 +89,15 @@
 
     <div id="ownerFooter" class="card-footer text-muted">
         <button id="closeButton" class="btn btn-danger float-left" data-toggle="modal" data-target="#closeModal">Close</button>
-        <button id="publishButton" class="btn btn-success float-right">Publish</button>
+        <button id="publishButton" class="btn btn-success float-right" data-toggle="modal" data-target="#publishModal">Publish</button>
+        <span id="publishWait" class="float-right" style="margin-right: 10px"></span>
     </div>
 </div>
 <div class="text-center">Developed by <a href="http://www.chainskills.com">ChainSkills</a> - Price data by <a
         href="https://www.cryptocompare.com">CryptoCompare</a> - Source code <a
         href="https://github.com/chainskills/cryptoseries">available on Github</a></div>
 
-<!-- Modal -->
+<!-- Support Modal -->
 <div class="modal fade" id="supportModal" tabindex="-1" role="dialog" aria-labelledby="supportModalLabel"
      aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
@@ -117,12 +118,12 @@
                     <li>every time the producer of this show publishes a new episode, your pledge will decrease by <span
                             id="supportPledgePerEpisode"></span> ETH
                     </li>
-                    <li>the show producer has to wait at least <span id="supportPublicationFrequencyBlocks"></span>
+                    <li>the show producer has to wait at least <span id="supportPublicationPeriodBlocks"></span>
                         blocks after a publication to publish again
                     </li>
                     <li>if the show gets cancelled and terminated, you will automatically get your entire pledge back
                     </li>
-                    <li>the pledge per episode or publication frequency cannot change</li>
+                    <li>the pledge per episode or publication period cannot change</li>
                 </ul>
                 <form class="form-inline">
                     <div class="row">
@@ -172,6 +173,7 @@
     </div>
 </div>
 
+<!-- Withdraw Modal -->
 <div class="modal fade" id="withdrawModal" tabindex="-1" role="dialog" aria-labelledby="withdrawModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -193,6 +195,36 @@
     </div>
 </div>
 
+<!-- Publish Modal -->
+<div class="modal fade" id="publishModal" tabindex="-1" role="dialog" aria-labelledby="publishModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="publishModalLabel">Publish a new episode</span>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Please specify the link of your episode down here, and make sure it's valid.</p>
+                <p>If your supporters can't find your episode there, they will probably withdraw all their pledge.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="text" name="episodeLink" id="episodeLink" class="form-control" placeholder="Episode link"/>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button id="publishConfirmButton" type="button" class="btn btn-primary" onclick="App.publish()">Publish episode</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Close Modal -->
 <div class="modal fade" id="closeModal" tabindex="-1" role="dialog" aria-labelledby="closeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">

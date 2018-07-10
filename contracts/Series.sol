@@ -12,16 +12,17 @@ contract Series is Ownable {
   uint public pledgePerEpisode;
   //periodicity of episodes, in number of blocks
   //to limit the possibility of owner to drain pledgers' accounts by publishing multiple episodes quickly
-  uint public minimumPublicationFrequency;
+  uint public minimumPublicationPeriod;
 
   //to keep track of how much each publisher pledged, knowing that this pledge will decrease each time a new episode is published, or when a pledger withdraws everything from his account
   mapping(address => uint) public pledges;
   //to keep a list of all the pledgers into the series
   address[] pledgers;
   //to keep track of the last time an episode was published, and limit the frequency of publications
-  uint lastPublicationBlock;
-  //to keep track of all published episodes to make sure the owner does not publish the same episode twice
-  mapping(bytes32 => bool) public publishedEpisodes;
+  uint public lastPublicationBlock;
+  //to keep track of all published episodes
+  mapping(uint => string) public publishedEpisodes;
+  uint public episodeCounter;
 
   //events
   /*
@@ -41,7 +42,7 @@ contract Series is Ownable {
   * @param episodeHash Hash of the published episode
   * @param episodePay How much the owner received for this episode
   */
-  event NewPublication(bytes32 episodeHash, uint episodePay);
+  event NewPublication(uint episodeId, string episodeLink, uint episodePay);
   /*
   * Emitted when a pledger withdraws all his pledge from his account
   * @param pledger Address of the withdrawing pledger
@@ -65,12 +66,12 @@ contract Series is Ownable {
   * Configures the series parameters
   * @param title Title of the series
   * @param pledgePerEpisode Amount the owner will receive for each episode from each pledger
-  * @param minimumPublicationFrequency Number of blocks the owner will have to wait between 2 publications
+  * @param minimumPublicationPeriod Number of blocks the owner will have to wait between 2 publications
   */
-  constructor(string _title, uint _pledgePerEpisode, uint _minimumPublicationFrequency) public {
+  constructor(string _title, uint _pledgePerEpisode, uint _minimumPublicationPeriod) public {
     title = _title;
     pledgePerEpisode = _pledgePerEpisode;
-    minimumPublicationFrequency = _minimumPublicationFrequency;
+    minimumPublicationPeriod = _minimumPublicationPeriod;
   }
 
   /*
@@ -136,16 +137,16 @@ contract Series is Ownable {
 
   /*
   * This function can only be called by the owner.
-  * And it can only be called if at least minimumPublicationFrequency blocks have passed since lastPublicationBlock
-  * The hash of the published episode (episodeHash) must not have been published yet.
-  * If all those prerequisites are met, then the owner receives pledgePerEpisode times number of pledgers whose pledge is still greater than pledgePerEpisode
-  * @param episodeHash Hash of the episode as published on IPFS for example
+  * And it can only be called if at least minimumPublicationPeriod blocks have passed since lastPublicationBlock
+  * If those prerequisites are met, then the owner receives pledgePerEpisode times number of pledgers whose pledge is still greater than pledgePerEpisode
+  * @param episodeLink Link to download the episode
   */
-  function publish(bytes32 episodeHash) public onlyOwner {
-    require(lastPublicationBlock == 0 || block.number > lastPublicationBlock.add(minimumPublicationFrequency), "Owner cannot publish again so soon");
-    require(!publishedEpisodes[episodeHash], "This episode was already published");
+  function publish(string episodeLink) public onlyOwner {
+    require(lastPublicationBlock == 0 || block.number > lastPublicationBlock.add(minimumPublicationPeriod), "Owner cannot publish again so soon");
 
-    publishedEpisodes[episodeHash] = true;
+    lastPublicationBlock = block.number;
+    episodeCounter++;
+    publishedEpisodes[episodeCounter] = episodeLink;
 
     //calculate episode pay by reusing a view function
     uint episodePay = nextEpisodePay();
@@ -162,7 +163,7 @@ contract Series is Ownable {
 
     //pay the owner
     owner.transfer(episodePay);
-    emit NewPublication(episodeHash, episodePay);
+    emit NewPublication(episodeCounter, episodeLink, episodePay);
   }
 
   /*

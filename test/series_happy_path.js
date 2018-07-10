@@ -3,7 +3,7 @@ let Series = artifacts.require("./Series.sol");
 contract('Series', function (accounts) {
     let seriesInstance = null;
     let minPledge = 0;
-    let minFrequency = 0;
+    let minPeriod = 0;
 
     it("is correctly initialized", function (done) {
         Series.deployed().then(function(instance) {
@@ -14,9 +14,9 @@ contract('Series', function (accounts) {
             return seriesInstance.pledgePerEpisode();
         }).then(function(pledgePerEpisode) {
             assert.notEqual(pledgePerEpisode, 0, "Pledge per episode should not be zero");
-            return seriesInstance.minimumPublicationFrequency();
-        }).then(function(minimumPublicationFrequency) {
-            assert.notEqual(minimumPublicationFrequency, 0, "Minimum publication frequency should not be zero");
+            return seriesInstance.minimumPublicationPeriod();
+        }).then(function(minimumPublicationPeriod) {
+            assert.notEqual(minimumPublicationPeriod, 0, "Minimum publication period should not be zero");
             return seriesInstance.totalPledgers();
         }).then(function(totalPledgers) {
             assert.equal(totalPledgers, 0, "There should be no pledger yet");
@@ -33,9 +33,9 @@ contract('Series', function (accounts) {
             return instance.pledgePerEpisode();
         }).then(function(result) {
             minPledge = result;
-            return seriesInstance.minimumPublicationFrequency();
+            return seriesInstance.minimumPublicationPeriod();
         }).then(function(result) {
-            minFrequency = result;
+            minPeriod = result;
             return seriesInstance.pledge({value: minPledge * 10, from: accounts[1]});
         }).then(function(result){
             assert.equal(result.receipt.status, 0x01, "Pledge should have been successful");
@@ -62,13 +62,14 @@ contract('Series', function (accounts) {
             return seriesInstance.nextEpisodePay();
         }).then(function(result) {
             assert.equal(result.toNumber(), minPledge.toNumber(), "Since there's only one pledger at this stage, next episode pay should be minimum pledge");
-            return seriesInstance.publish('0x1', {from: accounts[0]});
+            return seriesInstance.publish('http://www.example.com/episode001', {from: accounts[0]});
         }).then(function(result){
             assert.equal(result.receipt.status, 0x01, "Publish should have been successful");
             assert.equal(result.logs.length, 1, "1 event should have been emitted by publish operation");
             const newPublicationEvent = result.logs[0];
             assert.equal(newPublicationEvent.event, "NewPublication");
-            assert.equal(newPublicationEvent.args['episodeHash'], '0x1000000000000000000000000000000000000000000000000000000000000000', "NewPublicationEvent episode hash should correspond to the one published");
+            assert.equal(newPublicationEvent.args['episodeId'].toNumber(), 1, "NewPublicationEvent episode ID should be 1");
+            assert.equal(newPublicationEvent.args['episodeLink'], 'http://www.example.com/episode001', "NewPublicationEvent episode link should correspond to the one published");
             assert.equal(newPublicationEvent.args['episodePay'].toNumber(), minPledge.toNumber(), "Episode pay should correspond to pledge per episode");
 
             return seriesInstance.pledges(accounts[1]);
