@@ -82,7 +82,7 @@ contract Series is Ownable {
   * The owner cannot pledge on its own series.
   */
   function pledge() public payable {
-    require(msg.value.add(pledges[msg.sender]) > pledgePerEpisode, "Pledge must be greater than minimum pledge per episode");
+    require(msg.value.add(pledges[msg.sender]) >= pledgePerEpisode, "Pledge must be greater than minimum pledge per episode");
     require(msg.sender != owner, "Owner cannot pledge on its own series");
     bool oldPledger = false;
     for(uint i = 0; i < pledgers.length; i++) {

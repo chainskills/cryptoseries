@@ -406,6 +406,7 @@ window.App = {
         // we retrieve the address of the connected account
         web3.eth.getAccounts(function (error, accounts) {
             if (accounts && accounts.length > 0) {
+                $('#withdrawModal').modal('hide');
                 // we show a progress indicator
                 $('#cover-spin').show();
                 Series.deployed().then(function (instance) {
@@ -417,7 +418,6 @@ window.App = {
                     // so we have to check the status of the transaction receipt
                     if (result.receipt.status === '0x01') {
                         // if everything went smoothly, we simply hide the modal, and the UI will be refreshed based on the event watcher
-                        $('#withdrawModal').modal('hide');
                     } else {
                         console.error("Transaction didn't succeed");
                     }
