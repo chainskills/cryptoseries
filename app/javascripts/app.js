@@ -51,11 +51,11 @@ window.App = {
         App.refreshContractData();
         if (account) {
             $('#noAccountInfo').hide();
-            $('#accountInfo').show();
+            $('#yourSupport').show();
             App.refreshAccountData(account);
         } else {
             $('#noAccountInfo').show();
-            $('#accountInfo').hide();
+            $('#yourSupport').hide();
         }
     },
 
@@ -128,16 +128,21 @@ window.App = {
         }).catch(function (error) {
             // in case an error happens in this loading process, it means the contract has been disabled
             // so we hide all the UI elements and show a message instead of the title
-            $('#showInfo').hide();
-            $('#supporters').hide();
-            $('#yourSupport').hide();
-            $('#episodes').hide();
-            $('#episodeList').hide();
-            $('#ownerFooter').hide();
-            $('#title').html("This show was cancelled. You cannot support it anymore.");
-            // and of course we don't forget to hide the progress indicator
-            $('#cover-spin').hide();
+            App.displayShowCancelledMessage();
         });
+    },
+
+    displayShowCancelledMessage: function() {
+        $('#showInfo').hide();
+        $('#supporters').hide();
+        $('#noAccountInfo').hide();
+        $('#yourSupport').hide();
+        $('#episodes').hide();
+        $('#episodeList').hide();
+        $('#ownerFooter').hide();
+        $('#title').html("This show was cancelled. You cannot support it anymore.");
+        // and of course we don't forget to hide the progress indicator
+        $('#cover-spin').hide();
     },
 
     /**
@@ -154,15 +159,69 @@ window.App = {
 
         // then let's load the instance of the contract
         // NB: it's better to load it every time to make sure that we are interacting with the latest instance
-        let self = this;
         let series;
-        let perEpisode;
         Series.deployed().then(function (instance) {
             series = instance;
-            // once we have our instance, we check the amount the creator will get for each episode from each supporter
-            // this will be useful later on to do some conditional updates on the UI
-            return series.pledgePerEpisode();
-        }).then(function (pledgePerEpisode) {
+            return series.owner();
+        }).then(function(owner) {
+            if(account === owner) {
+                App.refreshOwnerData(series);
+            } else {
+                App.refreshSupporterData(series, account);
+            }
+        }).catch(function (error) {
+            // if any error happens at this stage, we simply log it not to lose it
+            console.error(error);
+        });
+    },
+
+    refreshOwnerData: function(series) {
+        $('#yourSupport').hide();
+        $('#ownerFooter').show();
+        // we will display a message and disable the publish button if it's too soon for the owner to publish a new episode
+        // we need to know whether an episode has already published
+        series.episodeCounter().then(function(episodeCounter) {
+            // otherwise publication is possible right away
+            if(episodeCounter.toNumber() === 0) {
+                $('#publishButton').prop('disabled', false);
+                $('#publishWait').html('You can publish whenever you want.');
+                $('#cover-spin').hide();
+            } else {
+                // if at least one episode has already been published, we will need 2 pieces of info from the contract: last publication block and minimum publication period
+                let lastPublicationBlockNumber, minimumPublicationPeriodNumber;
+                series.lastPublicationBlock().then(function(lastPublicationBlock) {
+                    lastPublicationBlockNumber = lastPublicationBlock.toNumber();
+                    return series.minimumPublicationPeriod();
+                }).then(function(minimumPublicationPeriod) {
+                    minimumPublicationPeriodNumber = minimumPublicationPeriod.toNumber();
+                    // once we have those 2 elements, we check the last block mined on the chain we are connected to
+                    web3.eth.getBlockNumber(function(error, blockNumber) {
+                        // and based on that we determine if the owner has to wait, and if yes, for how many blocks
+                        if(lastPublicationBlockNumber + minimumPublicationPeriod > blockNumber) {
+                            $('#publishWait').html("You have to wait for " + (lastPublicationBlockNumber + minimumPublicationPeriodNumber - blockNumber) + " blocks before publishing again.");
+                            $('#publishButton').prop('disabled', true);
+                        } else {
+                            $('#publishButton').prop('disabled', false);
+                            $('#publishWait').html('You can publish whenever you want.');
+                        }
+                        $('#cover-spin').hide();
+                    });
+                });
+            }
+        }).catch(function (error) {
+            // if any error happens at this stage, we simply log it not to lose it
+            console.error(error);
+            $('#cover-spin').hide();
+        });
+    },
+
+    refreshSupporterData: function(series, account) {
+        $('#yourSupport').show();
+        $('#ownerFooter').hide();
+        // once we have our instance, we check the amount the creator will get for each episode from each supporter
+        // this will be useful later on to do some conditional updates on the UI
+        let perEpisode;
+        series.pledgePerEpisode().then(function (pledgePerEpisode) {
             // we save that data in a local variable to be referenced later
             perEpisode = pledgePerEpisode;
             // and then we retrieve the pledge for the current account
@@ -190,61 +249,17 @@ window.App = {
             $('#pledgeEpisodes').html("" + Math.floor(pledge / perEpisode));
             $('#withdrawPledgeEth').html(pledgeEth);
             // and we convert that amount in ETH into fiat currency (here, euros) to display it as well
-            self.getEtherPrice('EUR', function (price) {
+            App.getEtherPrice('EUR', function (price) {
                 let pledgeFiat = '' + (price * web3.fromWei(pledge, "ether")).toFixed(2) + " €";
                 $('#pledgeFiat').html(pledgeFiat);
                 $('#withdrawPledgeFiat').html(pledgeFiat);
             });
 
-            // we then retrieve the address of the show owner to detect whether the current user is the creator himself or not
-            return series.owner();
-        }).then(function (owner) {
-            // if the show creator is the connected user, we show the footer with the owner-specific actions (publish and close)
-            // and we hide the support panel since the owner cannot support his own show
-            if (account === owner) {
-                $('#yourSupport').hide();
-                $('#ownerFooter').show();
-                // we will display a message and disable the publish button if it's too soon for the owner to publish a new episode
-                // we need to know whether an episode has already published
-                series.episodeCounter().then(function(episodeCounter) {
-                    // otherwise publication is possible right away
-                    if(episodeCounter.toNumber() === 0) {
-                        $('#publishButton').prop('disabled', false);
-                        $('#publishWait').html('You can publish whenever you want.');
-                        $('#cover-spin').hide();
-                    } else {
-                        // if at least one episode has already been published, we will need 2 pieces of info from the contract: last publication block and minimum publication period
-                        let lastPublicationBlockNumber, minimumPublicationPeriodNumber;
-                        series.lastPublicationBlock().then(function(lastPublicationBlock) {
-                            lastPublicationBlockNumber = lastPublicationBlock.toNumber();
-                            return series.minimumPublicationPeriod();
-                        }).then(function(minimumPublicationPeriod) {
-                            minimumPublicationPeriodNumber = minimumPublicationPeriod.toNumber();
-                            // once we have those 2 elements, we check the last block mined on the chain we are connected to
-                            web3.eth.getBlockNumber(function(error, blockNumber) {
-                                // and based on that we determine if the owner has to wait, and if yes, for how many blocks
-                                if(lastPublicationBlockNumber + minimumPublicationPeriod > blockNumber) {
-                                    $('#publishWait').html("You have to wait for " + (lastPublicationBlockNumber + minimumPublicationPeriodNumber - blockNumber) + " blocks before publishing again.");
-                                    $('#publishButton').prop('disabled', true);
-                                } else {
-                                    $('#publishButton').prop('disabled', false);
-                                    $('#publishWait').html('You can publish whenever you want.');
-                                }
-                                $('#cover-spin').hide();
-                            });
-                        });
-                    }
-                });
-            } else {
-                // if current user is not the owner, we hide the owner-specific buttons and show the supporter ones
-                $('#yourSupport').show();
-                $('#ownerFooter').hide();
-            }
-            // at this stage we can hide the progress indicator
             $('#cover-spin').hide();
         }).catch(function (error) {
             // if any error happens at this stage, we simply log it not to lose it
             console.error(error);
+            $('#cover-spin').hide();
         });
     },
 
@@ -277,7 +292,7 @@ window.App = {
 
             instance.SeriesClosed({}, {}).watch(function (error, event) {
                 App.refresh(account);
-            })
+            });
         });
     },
 
@@ -299,7 +314,7 @@ window.App = {
             }).then(function (pledgePerEpisode) {
                 $('#supportEth').val(web3.fromWei(pledgePerEpisode, "ether") * supportEpisodesField.val());
             });
-            // we also marke the fieled as valid in case it was previously marked as invalid
+            // we also mark the field as valid in case it was previously marked as invalid
             supportEpisodesField.removeClass('is-invalid');
             // and we enable the confirmation button
             supportConfirmButton.prop('disabled', false);
@@ -376,7 +391,7 @@ window.App = {
                         console.log(result);
                         // in some node implementation, no exception is triggered on a failing transaction and we have to check
                         // the status field in the transaction receipt
-                        if (result.receipt.status === '0x01') {
+                        if (parseInt(result.receipt.status) === 1) {
                             // if transaction is successful, we can hide the support modal
                             $('#supportModal').modal('hide');
                             // then reset it for next time
@@ -417,7 +432,7 @@ window.App = {
                 }).then(function (result) {
                     // in some node implementation, no exception is thrown when a transaction fails,
                     // so we have to check the status of the transaction receipt
-                    if (result.receipt.status !== '0x01') {
+                    if (parseInt(result.receipt.status) !== 1) {
                         console.error("Transaction didn't succeed");
                     }
                 }).catch(function (error) {
@@ -447,7 +462,7 @@ window.App = {
                     }).then(function (result) {
                         // in some node implementation, no exception is thrown when a transaction fails,
                         // so we have to check the status of the transaction receipt
-                        if (result.receipt.status === '0x01') {
+                        if (parseInt(result.receipt.status) === 1) {
                             // if everything went smoothly, we simply hide the modal, and the UI will be refreshed based on the event watcher
                             $('#publishModal').modal('hide');
                         } else {
@@ -485,7 +500,7 @@ window.App = {
                 }).then(function (result) {
                     // given that certain node implementations don't throw an exception when a transaction fail
                     // we check the status of the transaction receipt
-                    if (result.receipt.status === '0x01') {
+                    if (parseInt(result.receipt.status) === 1) {
                         // if everything is OK, we simply hide the modal and event watchers will update the UI later
                         $('#closeModal').modal('hide');
                     } else {

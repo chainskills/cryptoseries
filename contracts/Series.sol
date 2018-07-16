@@ -55,7 +55,6 @@ contract Series is Ownable {
   * @param pledge Current balance of the pledger
   */
   event PledgeInsufficient(address indexed pledger, uint pledge);
-
   /*
   * Emitted when the show is closed by the owner
   * @param balanceBeforeClose Balance of the contract at the moment of closing
@@ -73,6 +72,10 @@ contract Series is Ownable {
     pledgePerEpisode = _pledgePerEpisode;
     minimumPublicationPeriod = _minimumPublicationPeriod;
   }
+
+  /**
+  * TRANSACTIONAL FUNCTIONS
+  */
 
   /*
   * Lets someone increase their pledge.
@@ -100,42 +103,6 @@ contract Series is Ownable {
   }
 
   /*
-  * Total number of pledgers, whether they are still active or not,
-  * that is the number of accounts that have pledged at some point
-  */
-  function totalPledgers() public view returns (uint) {
-    return pledgers.length;
-  }
-
-  /*
-  * Number of active pledgers, that is number of pledgers whose pledge is still
-  * greater than minimum pledge per episode
-  */
-  function activePledgers() public view returns (uint) {
-    uint active = 0;
-    for(uint i = 0; i < pledgers.length; i++) {
-      if(pledges[pledgers[i]] > pledgePerEpisode) {
-        active++;
-      }
-    }
-    return active;
-  }
-
-  /*
-  * Calculate how much the owner will get paid for next episode
-  */
-  function nextEpisodePay() public view returns (uint) {
-    uint episodePay = 0;
-    for(uint i = 0; i < pledgers.length; i++) {
-      if(pledges[pledgers[i]] > pledgePerEpisode) {
-        episodePay = episodePay.add(pledgePerEpisode);
-      }
-    }
-
-    return episodePay;
-  }
-
-  /*
   * This function can only be called by the owner.
   * And it can only be called if at least minimumPublicationPeriod blocks have passed since lastPublicationBlock
   * If those prerequisites are met, then the owner receives pledgePerEpisode times number of pledgers whose pledge is still greater than pledgePerEpisode
@@ -148,13 +115,12 @@ contract Series is Ownable {
     episodeCounter++;
     publishedEpisodes[episodeCounter] = episodeLink;
 
-    //calculate episode pay by reusing a view function
-    uint episodePay = nextEpisodePay();
-
     //update pledges
+    uint episodePay = 0;
     for(uint i = 0; i < pledgers.length; i++) {
       if(pledges[pledgers[i]] > pledgePerEpisode) {
         pledges[pledgers[i]] = pledges[pledgers[i]].sub(pledgePerEpisode);
+        episodePay = episodePay.add(pledgePerEpisode);
         if(pledges[pledgers[i]] < pledgePerEpisode) {
           emit PledgeInsufficient(pledgers[i], pledges[pledgers[i]]);
         }
@@ -187,11 +153,50 @@ contract Series is Ownable {
     for(uint i = 0; i < pledgers.length; i++) {
       uint amount = pledges[pledgers[i]];
       if(amount > 0) {
-        pledges[pledgers[i]] = 0;
         pledgers[i].transfer(amount);
       }
     }
     emit SeriesClosed(contractBalance);
     selfdestruct(owner);
+  }
+
+  /**
+  * VIEW FUNCTIONS
+  */
+
+  /*
+  * Total number of pledgers, whether they are still active or not,
+  * that is the number of accounts that have pledged at some point
+  */
+  function totalPledgers() public view returns (uint) {
+    return pledgers.length;
+  }
+
+  /*
+  * Number of active pledgers, that is number of pledgers whose pledge is still
+  * greater than minimum pledge per episode
+  */
+  function activePledgers() public view returns (uint) {
+    uint active = 0;
+    for(uint i = 0; i < pledgers.length; i++) {
+      if(pledges[pledgers[i]] >= pledgePerEpisode) {
+        active++;
+      }
+    }
+    return active;
+  }
+
+  /*
+  * Calculate how much the owner will get paid for next episode
+  */
+  function nextEpisodePay() public view returns (uint) {
+    uint episodePay = 0;
+    for(uint i = 0; i < pledgers.length; i++) {
+      if(pledges[pledgers[i]] > pledgePerEpisode) {
+        episodePay = episodePay.add(pledgePerEpisode);
+      }
+    }
+
+    return episodePay;
   }
 }
