@@ -118,10 +118,10 @@ contract Series is Ownable {
     //update pledges
     uint episodePay = 0;
     for(uint i = 0; i < pledgers.length; i++) {
-      if(pledges[pledgers[i]] > pledgePerEpisode) {
+      if(isActive(pledgers[i])) {
         pledges[pledgers[i]] = pledges[pledgers[i]].sub(pledgePerEpisode);
         episodePay = episodePay.add(pledgePerEpisode);
-        if(pledges[pledgers[i]] < pledgePerEpisode) {
+        if(!isActive(pledgers[i])) {
           emit PledgeInsufficient(pledgers[i], pledges[pledgers[i]]);
         }
       }
@@ -179,7 +179,7 @@ contract Series is Ownable {
   function activePledgers() public view returns (uint) {
     uint active = 0;
     for(uint i = 0; i < pledgers.length; i++) {
-      if(pledges[pledgers[i]] >= pledgePerEpisode) {
+      if(isActive(pledgers[i])) {
         active++;
       }
     }
@@ -192,11 +192,15 @@ contract Series is Ownable {
   function nextEpisodePay() public view returns (uint) {
     uint episodePay = 0;
     for(uint i = 0; i < pledgers.length; i++) {
-      if(pledges[pledgers[i]] > pledgePerEpisode) {
+      if(isActive(pledgers[i])) {
         episodePay = episodePay.add(pledgePerEpisode);
       }
     }
 
     return episodePay;
+  }
+
+  function isActive(address pledger) internal view returns (bool) {
+    return pledges[pledger] >= pledgePerEpisode;
   }
 }
