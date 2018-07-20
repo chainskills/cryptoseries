@@ -446,9 +446,11 @@ window.App = {
     },
 
     publish: function () {
+        let publishConfirmButton = $('#publishConfirmButton');
         let episodeLinkField = $('#episodeLink');
         let episodeLink = episodeLinkField.val();
         if (episodeLink && episodeLink.length > 0) {
+            publishConfirmButton.prop('disabled', false);
             episodeLinkField.removeClass('is-invalid');
             // we retrieve the address of the connected account
             web3.eth.getAccounts(function (error, accounts) {
@@ -477,6 +479,7 @@ window.App = {
                 }
             });
         } else {
+            publishConfirmButton.prop('disabled', true);
             episodeLinkField.addClass('is-invalid');
         }
     },
